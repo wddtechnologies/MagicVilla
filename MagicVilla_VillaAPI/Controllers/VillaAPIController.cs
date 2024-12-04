@@ -1,6 +1,8 @@
 ﻿using MagicVilla_VillaAPI.Data;
+using MagicVilla_VillaAPI.Logging;
 using MagicVilla_VillaAPI.Models;
 using MagicVilla_VillaAPI.Models.Dto;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 namespace MagicVilla_VillaAPI.Controllers
 {
@@ -8,9 +10,18 @@ namespace MagicVilla_VillaAPI.Controllers
     [ApiController]
     public class VillaAPIController : ControllerBase
     {
+        private readonly ILogging _logger;
+
+        public VillaAPIController(ILogging logger) 
+        {
+            _logger = logger;
+
+        }
+
         [HttpGet]
         public ActionResult<IEnumerable<VilliaDTO>> GetVillas()
         {
+            _logger.Log("Getting all villas","");
             return Ok(VillaStore.villaList);
         }
         [HttpGet("{id:int}", Name = "GetVilla")]
@@ -21,6 +32,7 @@ namespace MagicVilla_VillaAPI.Controllers
         {
             if (id == 0)
             {
+                _logger.Log("Get Villa Error with Id" + id, "error");
                 return BadRequest();
             }
             var villa = VillaStore.villaList.FirstOrDefault(u => u.Id == id);
@@ -89,8 +101,28 @@ namespace MagicVilla_VillaAPI.Controllers
 
             return NoContent ();
 
+        }
+        [HttpPatch("{id:int}", Name = "UpdatePartialVilla")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public ActionResult UpdatePartialVilla(int id, JsonPatchDocument<VilliaDTO>patchDTO)
+        {
+            if(patchDTO == null || id == 0)
+            {
+                return BadRequest();
+            }
+            var villa = VillaStore.villaList.FirstOrDefault(u => u.Id == id);
+            if (villa == null)
+            {
+                return BadRequest();
+            }
+            patchDTO.ApplyTo(villa, ModelState);
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
-
+            return NoContent();
         }
     }
 }
