@@ -2,7 +2,7 @@
 
 namespace MagicVilla_VillaAPI.Models.Dto
 {
-    public class VilliaDTO
+    public class VillaDTO
     {
         public int Id { get; set; }
         [Required]
